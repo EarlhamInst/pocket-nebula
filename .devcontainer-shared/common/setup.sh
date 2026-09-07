@@ -424,8 +424,10 @@ fi
 # particular has to live there so collection unit tests can import ansible.*.
 #
 # TODO(speed): the parts of this that do not depend on the server version -
-# ansible, ansible-lint, passlib, pytest, ruff, pilfer - could be baked into the
+# ansible, ansible-lint, passlib, pytest, pilfer, ruff - could be baked into the
 # base image as cached layers, cutting them from every container create to zero.
+# pilfer shares the Ansible venv (not uv tool install) so it does not resolve a
+# second copy of ansible-core on every container create.
 # Only pyone and the opennebula-cli gem are genuinely server-version-dependent.
 # Deferred because it means an image tag bump to update Ansible, rather than a
 # plain rebuild.
@@ -478,13 +480,14 @@ else
 fi
 
 # One resolution, one venv, everything Ansible-side in it.
-echo "💎 Installing ansible, ansible-lint, pyone${PYONE_VERSION_SPEC}, passlib, pytest..."
+echo "💎 Installing ansible, ansible-lint, pyone${PYONE_VERSION_SPEC}, passlib, pytest, pilfer..."
 uv pip install --python "${ANSIBLE_VENV}/bin/python" --python-preference only-system \
     ansible \
     ansible-lint \
     "pyone${PYONE_VERSION_SPEC}" \
     passlib \
-    pytest
+    pytest \
+    pilfer
 
 # uv installs into the venv but does not put its console scripts on PATH the way
 # `pipx install` did. Symlink them into UV_TOOL_BIN_DIR so ansible, ansible-lint,
@@ -506,9 +509,6 @@ echo "🔗 Linked ${LINKED} entry points into ${UV_BIN_DIR}"
 
 echo "⚡ Installing Ruff (Python linter and formatter)..."
 uv tool install --force ruff
-
-echo "🔐 Installing pilfer (Ansible vault bulk operations)..."
-uv tool install --force pilfer
 
 # ---------------------------------------------------------------------------
 # System Python packages
