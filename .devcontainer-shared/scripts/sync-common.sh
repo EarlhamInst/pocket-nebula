@@ -221,15 +221,14 @@ if [[ -d "$COMMON_DIR" ]] && diff -r -q "$COMMON_DIR" "$STAGING" >/dev/null 2>&1
 fi
 
 # ---------------------------------------------------------------------------
-# Drift detected - show what changed, and ask before applying when we can
+# Drift detected - show what changed, then apply (default) or honour overrides
 # ---------------------------------------------------------------------------
-# initializeCommand runs on the HOST, so unlike the in-container lifecycle hooks
-# there may be a real terminal attached and a prompt is possible. When there is
-# not one (Cursor/VS Code usually runs this detached), applying silently is the
-# right default: that is what makes a shared-layer change land in the same
-# create cycle instead of needing a second rebuild.
+# Default is auto: overwrite common/ so a shared-layer change lands in the same
+# create cycle instead of needing a second rebuild. Drift shows up in git status
+# until someone commits the vendored copy.
 #
-# Override with POCKET_NEBULA_SYNC=auto (never ask) or =never (never apply).
+# Override with POCKET_NEBULA_SYNC=prompt (ask on a real TTY before applying)
+# or =never (keep the current vendored copy).
 if [[ -d "$COMMON_DIR" ]]; then
     log "shared layer has changed:"
     # diff exits 1 when files differ; with pipefail that would abort before apply.
@@ -238,7 +237,7 @@ if [[ -d "$COMMON_DIR" ]]; then
         | head -20 || true
 fi
 
-SYNC_MODE="${POCKET_NEBULA_SYNC:-prompt}"
+SYNC_MODE="${POCKET_NEBULA_SYNC:-auto}"
 
 if [[ "$SYNC_MODE" == "never" ]]; then
     log "POCKET_NEBULA_SYNC=never - keeping the current vendored copy."
@@ -250,7 +249,7 @@ if [[ "$SYNC_MODE" == "prompt" && -r /dev/tty && -t 0 ]]; then
     read -r REPLY < /dev/tty || REPLY=""
     case "$REPLY" in
         [nN]*)
-            log "skipped. Re-run a rebuild to be asked again, or set POCKET_NEBULA_SYNC=auto."
+            log "skipped. Re-run with POCKET_NEBULA_SYNC=auto to apply, or unset it (default is auto)."
             exit 0
             ;;
     esac

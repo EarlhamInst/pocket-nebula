@@ -162,8 +162,8 @@ skipped when already in sync; a branch name is re-fetched on every container sta
 
 | `POCKET_NEBULA_SYNC` | Behaviour |
 |---|---|
-| unset / `prompt` | Ask before applying, when a terminal is attached; apply silently otherwise |
-| `auto` | Always apply without asking |
+| unset / `auto` (default) | Apply without asking; drift shows in git until committed |
+| `prompt` | Ask `[Y/n]` on a real TTY before applying |
 | `never` | Never apply; keep the vendored copy |
 
 ---
