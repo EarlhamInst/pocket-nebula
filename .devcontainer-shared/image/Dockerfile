@@ -78,8 +78,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # UV_TOOL_BIN_DIR is pointed at the same directory the devcontainer python
 # feature uses for pipx binaries, so tools land where PATH already looks and the
 # shared "ruff.path": ["/usr/local/py-utils/bin/ruff"] setting stays correct.
+#
+# UV_NO_PROGRESS stops uv redrawing spinners during container create. Those
+# redraws are written to a non-TTY log and overwrote our own setup output, which
+# made the create log hard to read and lost several status lines entirely.
 ENV UV_TOOL_BIN_DIR=/usr/local/py-utils/bin \
-    UV_LINK_MODE=copy
+    UV_LINK_MODE=copy \
+    UV_NO_PROGRESS=1
 COPY --from=uv /uv /usr/local/bin/uv
 RUN mkdir -p /usr/local/py-utils/bin && chown -R ${USERNAME} /usr/local/py-utils && uv --version
 
