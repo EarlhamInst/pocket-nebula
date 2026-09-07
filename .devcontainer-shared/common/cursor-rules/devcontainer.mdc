@@ -40,6 +40,26 @@ duplicate silently stops tracking the image.
 Lifecycle commands **concatenate** rather than override, so adding a
 `postStartCommand` here runs in addition to the image's, not instead of it.
 
+## Shared layer sync
+
+`sync-common.sh` runs as `initializeCommand` on the host before each image build.
+It fetches the ref pinned in `common.ref` and compares it to the vendored
+`common/` directory.
+
+When they differ, the script prints a diff summary and **applies upstream by
+default** (`POCKET_NEBULA_SYNC=auto`). Updated files show in `git status` until
+committed. That is expected when `common.ref` tracks a moving branch such as
+`main`.
+
+| `POCKET_NEBULA_SYNC` | Behaviour |
+|---|---|
+| `auto` (default) | Overwrite `common/` and regenerate `AGENTS.md` / managed Cursor rules |
+| `never` | Keep the current vendored copy; useful to pin during debugging |
+| `prompt` | Ask `[Y/n]` on a real TTY before applying (e.g. `just sync` in a terminal) |
+
+Pin `common.ref` to a tag or full SHA for deliberate, reproducible upgrades
+instead of floating on `main`.
+
 ## Credential model
 
 - **One credential file in `~/.one/`** (`one_auth` or `one_auth_<SUFFIX>`): auto-used when
